@@ -1,0 +1,1178 @@
+openapi: 3.0.3
+info:
+  title: Dualcast
+  version: 0.1.0
+  description: >-
+    Dual-use threat intelligence and misuse-preparedness for AI capability
+    release. Scores artefacts across digital, physical, and political security,
+    manages openness regimes, red-team findings, responsible disclosure, and
+    pre-publication / pre-exposure gates.
+  x-product-slug: ai-ethics-dualcast
+  x-source: ai-in-ethics/the_malicious_use_of_ai/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Capabilities
+    description: Capability artefacts pending or cleared for release
+  - name: Assessments
+    description: Three-domain dual-use assessments
+  - name: Openness
+    description: Openness regimes and public rationales
+  - name: Gates
+    description: Pre-publication and pre-exposure release gates
+  - name: RedTeams
+    description: Red-team campaigns and findings
+  - name: Disclosures
+    description: Responsible AI vulnerability disclosure
+  - name: Outreach
+    description: External outreach and stakeholder review
+  - name: Monitoring
+    description: ai-resource and proliferation alerts
+  - name: Assurance
+    description: Audit packs for board and funders
+paths:
+  /v1/capabilities:
+    get:
+      operationId: listCapabilities
+      tags: [Capabilities]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: accessSurface
+          in: query
+          schema:
+            type: string
+            enum: [paper, weights, api, dataset, tool]
+      responses:
+        "200":
+          description: Capabilities page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeCapabilityArtefact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: registerCapability
+      tags: [Capabilities]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CapabilityArtefactCreate"
+      responses:
+        "201":
+          description: Capability registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeCapabilityArtefact"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+  /v1/capabilities/{capabilityId}:
+    parameters:
+      - $ref: "#/components/parameters/CapabilityId"
+    get:
+      operationId: getCapability
+      tags: [Capabilities]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Capability artefact
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeCapabilityArtefact"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/assessments:
+    get:
+      operationId: listAssessments
+      tags: [Assessments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: capabilityId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Assessments page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeDualUseAssessment"
+    post:
+      operationId: createAssessment
+      tags: [Assessments]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DualUseAssessmentCreate"
+      responses:
+        "201":
+          description: Assessment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeDualUseAssessment"
+  /v1/assessments/{assessmentId}:
+    parameters:
+      - $ref: "#/components/parameters/AssessmentId"
+    get:
+      operationId: getAssessment
+      tags: [Assessments]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Dual-use assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeDualUseAssessment"
+  /v1/openness-regimes:
+    post:
+      operationId: selectOpennessRegime
+      tags: [Openness]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpennessRegimeSelect"
+      responses:
+        "201":
+          description: Openness regime recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeOpennessRegime"
+  /v1/openness-regimes/{regimeId}/public-rationale:
+    parameters:
+      - $ref: "#/components/parameters/RegimeId"
+    get:
+      operationId: getOpennessPublicRationale
+      tags: [Openness]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Public rationale for reduced openness
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopePublicRationale"
+  /v1/gates:
+    get:
+      operationId: listGates
+      tags: [Gates]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, cleared, blocked, held]
+      responses:
+        "200":
+          description: Gates page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeReleaseGate"
+  /v1/gates/{gateId}/decision:
+    parameters:
+      - $ref: "#/components/parameters/GateId"
+    post:
+      operationId: decideGate
+      tags: [Gates]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GateDecisionRequest"
+      responses:
+        "200":
+          description: Gate decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeReleaseGate"
+        "409":
+          description: Preconditions not met
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /v1/red-teams/campaigns:
+    get:
+      operationId: listRedTeamCampaigns
+      tags: [RedTeams]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Campaigns page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeRedTeamCampaign"
+    post:
+      operationId: createRedTeamCampaign
+      tags: [RedTeams]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedTeamCampaignCreate"
+      responses:
+        "201":
+          description: Campaign created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeRedTeamCampaign"
+  /v1/red-teams/campaigns/{campaignId}/findings:
+    parameters:
+      - $ref: "#/components/parameters/CampaignId"
+    post:
+      operationId: addRedTeamFinding
+      tags: [RedTeams]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindingCreate"
+      responses:
+        "201":
+          description: Finding attached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeFinding"
+  /v1/disclosures:
+    get:
+      operationId: listDisclosures
+      tags: [Disclosures]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Disclosures page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeVulnerabilityDisclosure"
+    post:
+      operationId: submitDisclosure
+      tags: [Disclosures]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VulnerabilityDisclosureCreate"
+      responses:
+        "201":
+          description: Disclosure accepted under confidential intake
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeVulnerabilityDisclosure"
+  /v1/disclosures/{disclosureId}/clock:
+    parameters:
+      - $ref: "#/components/parameters/DisclosureId"
+    post:
+      operationId: advanceDisclosureClock
+      tags: [Disclosures]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [extend, publish, withdraw]
+                extensionDays:
+                  type: integer
+                rationale:
+                  type: string
+      responses:
+        "200":
+          description: Disclosure clock updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeVulnerabilityDisclosure"
+  /v1/outreach-tasks:
+    get:
+      operationId: listOutreachTasks
+      tags: [Outreach]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Outreach tasks page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeOutreachTask"
+    post:
+      operationId: createOutreachTask
+      tags: [Outreach]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutreachTaskCreate"
+      responses:
+        "201":
+          description: Outreach task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeOutreachTask"
+  /v1/stakeholder-reviews:
+    post:
+      operationId: requestStakeholderReview
+      tags: [Outreach]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StakeholderReviewCreate"
+      responses:
+        "201":
+          description: Stakeholder review requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeStakeholderReview"
+  /v1/monitoring/alerts:
+    get:
+      operationId: listResourceAlerts
+      tags: [Monitoring]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+      responses:
+        "200":
+          description: Resource alerts page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEnvelopeResourceAlert"
+    post:
+      operationId: ingestResourceAlert
+      tags: [Monitoring]
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceAlertCreate"
+      responses:
+        "201":
+          description: Alert ingested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeResourceAlert"
+  /v1/assurance/packs:
+    post:
+      operationId: generateAssurancePack
+      tags: [Assurance]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [capabilityId]
+              properties:
+                capabilityId:
+                  type: string
+                releaseCohort:
+                  type: string
+      responses:
+        "201":
+          description: Assurance pack generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeAssurancePack"
+  /v1/assurance/packs/{packId}:
+    parameters:
+      - $ref: "#/components/parameters/PackId"
+    get:
+      operationId: getAssurancePack
+      tags: [Assurance]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Assurance pack
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelopeAssurancePack"
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    CapabilityId:
+      name: capabilityId
+      in: path
+      required: true
+      schema:
+        type: string
+    AssessmentId:
+      name: assessmentId
+      in: path
+      required: true
+      schema:
+        type: string
+    RegimeId:
+      name: regimeId
+      in: path
+      required: true
+      schema:
+        type: string
+    GateId:
+      name: gateId
+      in: path
+      required: true
+      schema:
+        type: string
+    CampaignId:
+      name: campaignId
+      in: path
+      required: true
+      schema:
+        type: string
+    DisclosureId:
+      name: disclosureId
+      in: path
+      required: true
+      schema:
+        type: string
+    PackId:
+      name: packId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+    CapabilityArtefact:
+      type: object
+      required: [id, name, accessSurface, status]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        accessSurface:
+          type: string
+          enum: [paper, weights, api, dataset, tool]
+        specialConcern:
+          type: boolean
+          description: True for digital-security or adversarial-ML special-concern areas
+        status:
+          type: string
+          enum: [draft, under_assessment, held, cleared, blocked]
+        ownerId:
+          type: string
+    CapabilityArtefactCreate:
+      type: object
+      required: [name, accessSurface]
+      properties:
+        name:
+          type: string
+        accessSurface:
+          type: string
+          enum: [paper, weights, api, dataset, tool]
+        specialConcern:
+          type: boolean
+        claimedBeneficialUses:
+          type: array
+          items:
+            type: string
+        externalRef:
+          type: string
+    DomainScore:
+      type: object
+      required: [domain, score, rationale]
+      properties:
+        domain:
+          type: string
+          enum: [digital, physical, political]
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        rationale:
+          type: string
+    DualUseAssessment:
+      type: object
+      required: [id, capabilityId, domainScores, landscapeChanges, status]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        domainScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/DomainScore"
+        landscapeChanges:
+          type: array
+          items:
+            type: string
+            enum: [expansion, new_threat, character_change]
+        foreseeableHarmSummary:
+          type: string
+        status:
+          type: string
+          enum: [draft, submitted, approved, rejected]
+    DualUseAssessmentCreate:
+      type: object
+      required: [capabilityId, domainScores, landscapeChanges]
+      properties:
+        capabilityId:
+          type: string
+        domainScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/DomainScore"
+        landscapeChanges:
+          type: array
+          items:
+            type: string
+            enum: [expansion, new_threat, character_change]
+        foreseeableHarmSummary:
+          type: string
+    OpennessRegime:
+      type: object
+      required: [id, capabilityId, regime, approverId]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        regime:
+          type: string
+          enum: [full_open, delayed_disclosure, central_access, selective_sharing]
+        delayUntil:
+          type: string
+          format: date-time
+        trustedPartnerGroupId:
+          type: string
+        approverId:
+          type: string
+        publicRationaleRequired:
+          type: boolean
+    OpennessRegimeSelect:
+      type: object
+      required: [capabilityId, regime, publicRationale]
+      properties:
+        capabilityId:
+          type: string
+        regime:
+          type: string
+          enum: [full_open, delayed_disclosure, central_access, selective_sharing]
+        delayUntil:
+          type: string
+          format: date-time
+        trustedPartnerGroupId:
+          type: string
+        publicRationale:
+          type: string
+    PublicRationale:
+      type: object
+      properties:
+        regimeId:
+          type: string
+        regime:
+          type: string
+        rationale:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+    ReleaseGate:
+      type: object
+      required: [id, capabilityId, status]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        assessmentId:
+          type: string
+        status:
+          type: string
+          enum: [pending, cleared, blocked, held]
+        holdUntil:
+          type: string
+          format: date-time
+        residualRiskAccepted:
+          type: boolean
+        decidedBy:
+          type: string
+    GateDecisionRequest:
+      type: object
+      required: [outcome]
+      properties:
+        outcome:
+          type: string
+          enum: [clear, block, hold]
+        holdUntil:
+          type: string
+          format: date-time
+        residualRiskAccepted:
+          type: boolean
+        rationale:
+          type: string
+    RedTeamCampaign:
+      type: object
+      required: [id, capabilityId, status]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        status:
+          type: string
+          enum: [planned, running, completed, cancelled]
+        scopeDomains:
+          type: array
+          items:
+            type: string
+            enum: [digital, physical, political]
+        openFindingCount:
+          type: integer
+    RedTeamCampaignCreate:
+      type: object
+      required: [capabilityId, scopeDomains]
+      properties:
+        capabilityId:
+          type: string
+        scopeDomains:
+          type: array
+          items:
+            type: string
+            enum: [digital, physical, political]
+        objectives:
+          type: string
+    Finding:
+      type: object
+      required: [id, campaignId, domain, severity, status]
+      properties:
+        id:
+          type: string
+        campaignId:
+          type: string
+        domain:
+          type: string
+          enum: [digital, physical, political]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [open, remediated, accepted_risk]
+        summary:
+          type: string
+    FindingCreate:
+      type: object
+      required: [domain, severity, summary]
+      properties:
+        domain:
+          type: string
+          enum: [digital, physical, political]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        summary:
+          type: string
+    VulnerabilityDisclosure:
+      type: object
+      required: [id, category, status, clockExpiresAt]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        category:
+          type: string
+          enum: [security_flaw, adversarial_input, data_poisoning, misuse_recipe, other]
+        status:
+          type: string
+          enum: [intake, vendor_notified, mitigated, published, withdrawn]
+        clockExpiresAt:
+          type: string
+          format: date-time
+        confidential:
+          type: boolean
+    VulnerabilityDisclosureCreate:
+      type: object
+      required: [category, summary]
+      properties:
+        capabilityId:
+          type: string
+        category:
+          type: string
+          enum: [security_flaw, adversarial_input, data_poisoning, misuse_recipe, other]
+        summary:
+          type: string
+        reporterContact:
+          type: string
+    OutreachTask:
+      type: object
+      required: [id, capabilityId, audience, status]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        audience:
+          type: string
+          enum: [policymaker, security_vendor, platform_operator, civil_society, other]
+        status:
+          type: string
+          enum: [open, completed, cancelled]
+        dueAt:
+          type: string
+          format: date-time
+    OutreachTaskCreate:
+      type: object
+      required: [capabilityId, audience]
+      properties:
+        capabilityId:
+          type: string
+        audience:
+          type: string
+          enum: [policymaker, security_vendor, platform_operator, civil_society, other]
+        notes:
+          type: string
+        dueAt:
+          type: string
+          format: date-time
+    StakeholderReview:
+      type: object
+      required: [id, assessmentId, reviewerRole, status]
+      properties:
+        id:
+          type: string
+        assessmentId:
+          type: string
+        reviewerRole:
+          type: string
+          enum: [external_security, civil_society, domain_expert, national_security]
+        status:
+          type: string
+          enum: [requested, completed, declined]
+        decision:
+          type: string
+          enum: [endorse, conditional, object]
+    StakeholderReviewCreate:
+      type: object
+      required: [assessmentId, reviewerRole]
+      properties:
+        assessmentId:
+          type: string
+        reviewerRole:
+          type: string
+          enum: [external_security, civil_society, domain_expert, national_security]
+        reviewerId:
+          type: string
+    ResourceAlert:
+      type: object
+      required: [id, resourceType, severity, status]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        resourceType:
+          type: string
+          enum: [compute, checkpoint, dataset, api_anomaly]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [open, investigating, closed]
+        signalSummary:
+          type: string
+    ResourceAlertCreate:
+      type: object
+      required: [resourceType, severity, signalSummary]
+      properties:
+        capabilityId:
+          type: string
+        resourceType:
+          type: string
+          enum: [compute, checkpoint, dataset, api_anomaly]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        signalSummary:
+          type: string
+    AssurancePack:
+      type: object
+      required: [id, capabilityId, generatedAt]
+      properties:
+        id:
+          type: string
+        capabilityId:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        assessmentIds:
+          type: array
+          items:
+            type: string
+        opennessRegimeId:
+          type: string
+        gateStatus:
+          type: string
+        openFindingCount:
+          type: integer
+        outreachCompleted:
+          type: boolean
+    DataEnvelopeCapabilityArtefact:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/CapabilityArtefact"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeDualUseAssessment:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/DualUseAssessment"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeOpennessRegime:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/OpennessRegime"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopePublicRationale:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/PublicRationale"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeReleaseGate:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ReleaseGate"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeRedTeamCampaign:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/RedTeamCampaign"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeFinding:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/Finding"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeVulnerabilityDisclosure:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/VulnerabilityDisclosure"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeOutreachTask:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/OutreachTask"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeStakeholderReview:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/StakeholderReview"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeResourceAlert:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/ResourceAlert"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    DataEnvelopeAssurancePack:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: "#/components/schemas/AssurancePack"
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeCapabilityArtefact:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/CapabilityArtefact"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeDualUseAssessment:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/DualUseAssessment"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeReleaseGate:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ReleaseGate"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeRedTeamCampaign:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/RedTeamCampaign"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeVulnerabilityDisclosure:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/VulnerabilityDisclosure"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeOutreachTask:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/OutreachTask"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
+    ListEnvelopeResourceAlert:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceAlert"
+            nextCursor:
+              type: string
+        meta:
+          $ref: "#/components/schemas/ResponseMeta"
